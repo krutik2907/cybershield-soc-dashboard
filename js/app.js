@@ -187,39 +187,6 @@ const App = (() => {
         }
     }
 
-    // --- Settings Modal (now shows server-side key status, no client-side storage) ---
-    function initSettings() {
-        const modal = document.getElementById('settingsModal');
-        const openBtn = document.getElementById('openSettings');
-        const closeBtn = document.getElementById('closeSettings');
-
-        openBtn.addEventListener('click', () => {
-            // Show server-side key status
-            const fields = [
-                { id: 'statusVT', api: 'VT', name: 'VirusTotal' },
-                { id: 'statusAbuseIPDB', api: 'AbuseIPDB', name: 'AbuseIPDB' },
-                { id: 'statusIPInfo', api: 'IPInfo', name: 'ipinfo.io' },
-                { id: 'statusOTX', api: 'OTX', name: 'AlienVault OTX' }
-            ];
-            fields.forEach(f => {
-                const el = document.getElementById(f.id);
-                if (apiStatus[f.api]) {
-                    el.textContent = '✅ Configured on server';
-                    el.style.color = '#34d399';
-                } else {
-                    el.textContent = '❌ Not configured — add to .env file on server';
-                    el.style.color = '#f43f5e';
-                }
-            });
-            modal.classList.add('show');
-        });
-
-        closeBtn.addEventListener('click', () => modal.classList.remove('show'));
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) modal.classList.remove('show');
-        });
-    }
-
     // --- Init ---
     function init() {
         // Navigation
@@ -246,9 +213,6 @@ const App = (() => {
 
         // Fetch API status from server
         fetchApiStatus();
-
-        // Settings
-        initSettings();
 
         // Initialize all modules
         if (typeof Dashboard !== 'undefined') Dashboard.init();

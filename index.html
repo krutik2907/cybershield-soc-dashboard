@@ -11,37 +11,7 @@
     <link rel="stylesheet" href="css/index.css">
 </head>
 <body>
-    <!-- Settings Modal -->
-    <div class="modal-overlay" id="settingsModal">
-        <div class="modal">
-            <div class="modal-header">
-                <h2>⚙️ API Configuration</h2>
-                <button class="modal-close" id="closeSettings">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="modal-desc">🔒 <strong>Secure Mode:</strong> API keys are stored server-side in the <code>.env</code> file, never exposed to the browser. Edit <code>.env</code> on the server to add or change keys.</p>
-                <div class="api-key-group">
-                    <label>VirusTotal API Key</label>
-                    <span class="api-status" id="statusVT">Checking...</span>
-                </div>
-                <div class="api-key-group">
-                    <label>AbuseIPDB API Key</label>
-                    <span class="api-status" id="statusAbuseIPDB">Checking...</span>
-                </div>
-                <div class="api-key-group">
-                    <label>ipinfo.io API Token</label>
-                    <span class="api-status" id="statusIPInfo">Checking...</span>
-                </div>
-                <div class="api-key-group">
-                    <label>AlienVault OTX API Key</label>
-                    <span class="api-status" id="statusOTX">Checking...</span>
-                </div>
-                <div class="modal-actions">
-                    <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.5;">To configure: copy <code>.env.example</code> → <code>.env</code>, add your keys, and restart the server.</p>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Toast Container -->
     <div id="toastContainer" class="toast-container"></div>
@@ -80,12 +50,6 @@
                     <span class="nav-label">Threat Intel Feed</span>
                 </a>
             </nav>
-            <div class="sidebar-footer">
-                <button class="nav-item" id="openSettings">
-                    <span class="nav-icon">⚙️</span>
-                    <span class="nav-label">Settings</span>
-                </button>
-            </div>
         </aside>
 
         <!-- Main -->
