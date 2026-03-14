@@ -169,7 +169,15 @@ const App = (() => {
             if (!res.ok) {
                 const text = await res.text();
                 let msg;
-                try { msg = JSON.parse(text).error; } catch { msg = text.substring(0, 200); }
+                try {
+                    const json = JSON.parse(text);
+                    // Handle nested error objects (e.g., VT returns {error: {code: "..."}} )
+                    msg = typeof json.error === 'string' ? json.error
+                        : json.error?.message || json.error?.code || json.message
+                        || JSON.stringify(json.error || json).substring(0, 200);
+                } catch {
+                    msg = text.substring(0, 200);
+                }
                 throw new Error(msg || `HTTP ${res.status}`);
             }
             return await res.json();

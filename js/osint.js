@@ -88,12 +88,15 @@ const OSINTTools = (() => {
             return;
         }
 
-        const threat = data.threat || 'N/A';
-        const status = data.url_status || 'N/A';
-        const added = data.date_added || 'N/A';
-        const tags = (data.tags || []).join(', ') || 'None';
-        const isOnline = status === 'online';
-        const statusColor = isOnline ? 'var(--accent-red)' : 'var(--accent-green)';
+        // URLhaus API can return fields at top level or under url_info
+        const info = data.url_info || data;
+        const threat = info.threat || data.threat || 'Unknown';
+        const status = info.url_status || data.url_status || 'Unknown';
+        const added = info.date_added || data.date_added || 'Unknown';
+        const rawTags = info.tags || data.tags;
+        const tags = Array.isArray(rawTags) ? rawTags.filter(Boolean).join(', ') : (rawTags || 'None');
+        const isOnline = status.toLowerCase() === 'online';
+        const statusColor = isOnline ? 'var(--accent-red)' : 'var(--accent-yellow)';
 
         card.innerHTML = `
             <div style="text-align:center;padding:24px;">
@@ -115,7 +118,7 @@ const OSINTTools = (() => {
                 </div>
                 <div class="abuse-detail">
                     <div class="abuse-detail-label">Tags</div>
-                    <div class="abuse-detail-value">${App.escapeHtml(tags)}</div>
+                    <div class="abuse-detail-value">${App.escapeHtml(tags || 'None')}</div>
                 </div>
             </div>
         `;
