@@ -1,0 +1,19 @@
+# https://render.com/docs/render-yaml
+services:
+  - type: web
+    name: cybershield-soc-dashboard
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: VT_API_KEY
+        sync: false
+      - key: ABUSEIPDB_API_KEY
+        sync: false
+      - key: IPINFO_TOKEN
+        sync: false
+      - key: OTX_API_KEY
+        sync: false

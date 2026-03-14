@@ -1,0 +1,26 @@
+{
+  "name": "cybershield-soc-dashboard",
+  "version": "1.0.0",
+  "description": "SOC Analyst Threat Intelligence Dashboard — Secure backend proxy with free API integrations",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "soc",
+    "cybersecurity",
+    "threat-intelligence",
+    "dashboard"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.1",
+    "helmet": "^8.1.0"
+  }
+}

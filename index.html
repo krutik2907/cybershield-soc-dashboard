@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="SOC Analyst Threat Intelligence Dashboard - A comprehensive security operations center tool for threat hunting, OSINT, incident response, and cyber defense.">
+    <title>CyberShield SOC — Threat Intelligence Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/index.css">
+</head>
+<body>
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>⚙️ API Configuration</h2>
+                <button class="modal-close" id="closeSettings">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-desc">🔒 <strong>Secure Mode:</strong> API keys are stored server-side in the <code>.env</code> file, never exposed to the browser. Edit <code>.env</code> on the server to add or change keys.</p>
+                <div class="api-key-group">
+                    <label>VirusTotal API Key</label>
+                    <span class="api-status" id="statusVT">Checking...</span>
+                </div>
+                <div class="api-key-group">
+                    <label>AbuseIPDB API Key</label>
+                    <span class="api-status" id="statusAbuseIPDB">Checking...</span>
+                </div>
+                <div class="api-key-group">
+                    <label>ipinfo.io API Token</label>
+                    <span class="api-status" id="statusIPInfo">Checking...</span>
+                </div>
+                <div class="api-key-group">
+                    <label>AlienVault OTX API Key</label>
+                    <span class="api-status" id="statusOTX">Checking...</span>
+                </div>
+                <div class="modal-actions">
+                    <p style="font-size:0.82rem;color:var(--text-muted);line-height:1.5;">To configure: copy <code>.env.example</code> → <code>.env</code>, add your keys, and restart the server.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- App Layout -->
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">🛡️</div>
+                <span class="brand-text">CyberShield</span>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard" id="navDashboard">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-label">Dashboard</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="threat-hunter" id="navThreatHunter">
+                    <span class="nav-icon">🔍</span>
+                    <span class="nav-label">Threat Hunter</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="osint" id="navOsint">
+                    <span class="nav-icon">🌐</span>
+                    <span class="nav-label">OSINT Tools</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="incident" id="navIncident">
+                    <span class="nav-icon">🚨</span>
+                    <span class="nav-label">Incident Response</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="cyber-defense" id="navCyberDefense">
+                    <span class="nav-icon">🛡️</span>
+                    <span class="nav-label">Cyber Defense</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="threat-feed" id="navThreatFeed">
+                    <span class="nav-icon">📡</span>
+                    <span class="nav-label">Threat Intel Feed</span>
+                </a>
+            </nav>
+            <div class="sidebar-footer">
+                <button class="nav-item" id="openSettings">
+                    <span class="nav-icon">⚙️</span>
+                    <span class="nav-label">Settings</span>
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <main class="main">
+            <!-- Header -->
+            <header class="header">
+                <div class="header-left">
+                    <button class="hamburger" id="toggleSidebar">☰</button>
+                    <h1 class="page-title" id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="api-indicators" id="apiIndicators">
+                        <span class="indicator" data-api="VT" title="VirusTotal">VT</span>
+                        <span class="indicator" data-api="AbuseIPDB" title="AbuseIPDB">AB</span>
+                        <span class="indicator" data-api="IPInfo" title="ipinfo.io">IP</span>
+                        <span class="indicator" data-api="OTX" title="AlienVault OTX">OTX</span>
+                    </div>
+                    <div class="header-clock" id="headerClock"></div>
+                </div>
+            </header>
+
+            <!-- Content Panels -->
+            <div class="content">
+                <!-- Dashboard Panel -->
+                <section class="panel active" id="panelDashboard">
+                    <div class="dashboard-grid">
+                        <div class="stat-card" id="statInvestigations">
+                            <div class="stat-icon">🔎</div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statInvCount">0</span>
+                                <span class="stat-label">Investigations</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" id="statIncidents">
+                            <div class="stat-icon">🚨</div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statIncCount">0</span>
+                                <span class="stat-label">Open Incidents</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" id="statThreats">
+                            <div class="stat-icon">⚠️</div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statThreatCount">0</span>
+                                <span class="stat-label">Threats Detected</span>
+                            </div>
+                        </div>
+                        <div class="stat-card" id="statIOCs">
+                            <div class="stat-icon">🧬</div>
+                            <div class="stat-info">
+                                <span class="stat-value" id="statIOCCount">0</span>
+                                <span class="stat-label">IOCs Scanned</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <div class="card threat-gauge-card">
+                            <h3 class="card-title">Threat Level</h3>
+                            <div class="threat-gauge" id="threatGauge">
+                                <svg viewBox="0 0 200 120" class="gauge-svg">
+                                    <defs>
+                                        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" style="stop-color:#00ff88"/>
+                                            <stop offset="50%" style="stop-color:#ffaa00"/>
+                                            <stop offset="100%" style="stop-color:#ff3366"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="14" stroke-linecap="round"/>
+                                    <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251" stroke-dashoffset="200" id="gaugeArc" class="gauge-arc"/>
+                                    <text x="100" y="90" text-anchor="middle" class="gauge-text" id="gaugeText">LOW</text>
+                                    <text x="100" y="110" text-anchor="middle" class="gauge-sub" id="gaugeSub">0 active threats</text>
+                                </svg>
+                            </div>
+                        </div>
+                        <div class="card activity-card">
+                            <h3 class="card-title">Recent Activity</h3>
+                            <div class="activity-timeline" id="activityTimeline">
+                                <div class="empty-state">
+                                    <span class="empty-icon">📋</span>
+                                    <p>No recent activity. Start investigating!</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-row">
+                        <div class="card quick-actions-card">
+                            <h3 class="card-title">Quick Actions</h3>
+                            <div class="quick-actions">
+                                <button class="quick-btn" data-action="threat-hunter" id="quickScanIOC">
+                                    <span class="quick-icon">🔍</span>
+                                    <span>Scan IOC</span>
+                                </button>
+                                <button class="quick-btn" data-action="osint" id="quickOSINT">
+                                    <span class="quick-icon">🌐</span>
+                                    <span>OSINT Lookup</span>
+                                </button>
+                                <button class="quick-btn" data-action="incident" id="quickIncident">
+                                    <span class="quick-icon">🚨</span>
+                                    <span>New Incident</span>
+                                </button>
+                                <button class="quick-btn" data-action="cyber-defense" id="quickCVE">
+                                    <span class="quick-icon">🛡️</span>
+                                    <span>Search CVE</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Threat Hunter Panel -->
+                <section class="panel" id="panelThreatHunter">
+                    <div class="panel-header-row">
+                        <h2>Threat Hunter — IOC Analysis</h2>
+                    </div>
+                    <div class="card search-card">
+                        <div class="ioc-type-selector">
+                            <button class="ioc-type active" data-type="ip" id="iocTypeIP">IP Address</button>
+                            <button class="ioc-type" data-type="domain" id="iocTypeDomain">Domain</button>
+                            <button class="ioc-type" data-type="hash" id="iocTypeHash">File Hash</button>
+                            <button class="ioc-type" data-type="url" id="iocTypeURL">URL</button>
+                        </div>
+                        <div class="search-bar">
+                            <input type="text" id="iocInput" class="search-input" placeholder="Enter an IP address to investigate...">
+                            <button class="btn btn-primary" id="iocSearchBtn">
+                                <span class="btn-text">Analyze</span>
+                                <span class="btn-loader hidden">⏳</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="threatResults" class="threat-results hidden">
+                        <!-- Verdict Banner -->
+                        <div class="card verdict-card" id="verdictCard">
+                            <div class="verdict-header">
+                                <span class="verdict-icon" id="verdictIcon">⚪</span>
+                                <div>
+                                    <h3 class="verdict-title" id="verdictTitle">Analysis Result</h3>
+                                    <p class="verdict-sub" id="verdictSub"></p>
+                                </div>
+                            </div>
+                            <div class="verdict-score" id="verdictScore"></div>
+                        </div>
+
+                        <!-- VirusTotal Results -->
+                        <div class="card" id="vtResultsCard">
+                            <h3 class="card-title">🦠 VirusTotal Results</h3>
+                            <div class="vt-summary" id="vtSummary"></div>
+                            <div class="vt-detections" id="vtDetections"></div>
+                        </div>
+
+                        <!-- AbuseIPDB Results -->
+                        <div class="card" id="abuseResultsCard">
+                            <h3 class="card-title">🚫 AbuseIPDB Results</h3>
+                            <div class="abuse-summary" id="abuseSummary"></div>
+                        </div>
+                    </div>
+
+                    <!-- Search History -->
+                    <div class="card">
+                        <h3 class="card-title">🕐 Investigation History</h3>
+                        <div id="searchHistory" class="search-history">
+                            <div class="empty-state">
+                                <span class="empty-icon">🔍</span>
+                                <p>No investigations yet. Start by entering an IOC above.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- OSINT Panel -->
+                <section class="panel" id="panelOsint">
+                    <div class="panel-header-row">
+                        <h2>OSINT Tools</h2>
+                    </div>
+                    <div class="osint-tabs">
+                        <button class="osint-tab active" data-osint="geoip" id="osintTabGeo">IP Geolocation</button>
+                        <button class="osint-tab" data-osint="urlscan" id="osintTabURL">URL Scanner</button>
+                        <button class="osint-tab" data-osint="bulk" id="osintTabBulk">Bulk IOC Scan</button>
+                    </div>
+
+                    <!-- GeoIP -->
+                    <div class="osint-panel active" id="osintGeoip">
+                        <div class="card">
+                            <div class="search-bar">
+                                <input type="text" id="geoIpInput" class="search-input" placeholder="Enter an IP address for geolocation lookup...">
+                                <button class="btn btn-primary" id="geoLookupBtn">Locate</button>
+                            </div>
+                        </div>
+                        <div id="geoResults" class="hidden">
+                            <div class="geo-grid" id="geoGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- URL Scanner -->
+                    <div class="osint-panel" id="osintUrlscan">
+                        <div class="card">
+                            <div class="search-bar">
+                                <input type="text" id="urlScanInput" class="search-input" placeholder="Enter a URL to check against URLhaus database...">
+                                <button class="btn btn-primary" id="urlScanBtn">Scan URL</button>
+                            </div>
+                        </div>
+                        <div id="urlResults" class="hidden">
+                            <div class="card" id="urlResultsCard"></div>
+                        </div>
+                    </div>
+
+                    <!-- Bulk IOC -->
+                    <div class="osint-panel" id="osintBulk">
+                        <div class="card">
+                            <textarea id="bulkInput" class="bulk-textarea" placeholder="Paste IOCs here (one per line)...&#10;Supports: IP addresses, domains, URLs, file hashes&#10;Example:&#10;8.8.8.8&#10;evil-domain.com&#10;44d88612fea8a8f36de82e1278abb02f"></textarea>
+                            <div class="bulk-actions">
+                                <button class="btn btn-primary" id="bulkScanBtn">Scan All IOCs</button>
+                                <button class="btn btn-ghost" id="bulkExportBtn">Export Results JSON</button>
+                            </div>
+                        </div>
+                        <div id="bulkResults"></div>
+                    </div>
+                </section>
+
+                <!-- Incident Response Panel -->
+                <section class="panel" id="panelIncident">
+                    <div class="panel-header-row">
+                        <h2>Incident Response</h2>
+                        <button class="btn btn-primary" id="newIncidentBtn">+ New Incident</button>
+                    </div>
+
+                    <!-- Incident Form (hidden by default) -->
+                    <div class="card incident-form hidden" id="incidentForm">
+                        <h3 class="card-title">Create New Incident</h3>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label for="incTitle">Title</label>
+                                <input type="text" id="incTitle" placeholder="Brief incident title">
+                            </div>
+                            <div class="form-group">
+                                <label for="incSeverity">Severity</label>
+                                <select id="incSeverity">
+                                    <option value="P4">P4 — Low</option>
+                                    <option value="P3">P3 — Medium</option>
+                                    <option value="P2" selected>P2 — High</option>
+                                    <option value="P1">P1 — Critical</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="incType">Type</label>
+                                <select id="incType">
+                                    <option value="Malware">Malware</option>
+                                    <option value="Phishing">Phishing</option>
+                                    <option value="Intrusion">Intrusion</option>
+                                    <option value="DDoS">DDoS</option>
+                                    <option value="Data Breach">Data Breach</option>
+                                    <option value="Insider Threat">Insider Threat</option>
+                                    <option value="Other">Other</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="incAssets">Affected Assets</label>
+                                <input type="text" id="incAssets" placeholder="e.g., Web Server 01, DB Cluster">
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="incDesc">Description</label>
+                                <textarea id="incDesc" rows="3" placeholder="Describe the incident in detail..."></textarea>
+                            </div>
+                            <div class="form-group full-width">
+                                <label for="incIOCs">Related IOCs</label>
+                                <input type="text" id="incIOCs" placeholder="Comma-separated IOCs (IPs, hashes, domains)">
+                            </div>
+                        </div>
+                        <div class="form-actions">
+                            <button class="btn btn-primary" id="submitIncident">Create Incident</button>
+                            <button class="btn btn-ghost" id="cancelIncident">Cancel</button>
+                        </div>
+                    </div>
+
+                    <!-- Incident Filters -->
+                    <div class="card incident-filters">
+                        <div class="filter-row">
+                            <select id="filterSeverity" class="filter-select">
+                                <option value="">All Severities</option>
+                                <option value="P1">P1 — Critical</option>
+                                <option value="P2">P2 — High</option>
+                                <option value="P3">P3 — Medium</option>
+                                <option value="P4">P4 — Low</option>
+                            </select>
+                            <select id="filterStatus" class="filter-select">
+                                <option value="">All Statuses</option>
+                                <option value="New">New</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Contained">Contained</option>
+                                <option value="Resolved">Resolved</option>
+                                <option value="Closed">Closed</option>
+                            </select>
+                            <button class="btn btn-ghost" id="exportIncidents">Export JSON</button>
+                        </div>
+                    </div>
+
+                    <!-- Incident Table -->
+                    <div class="card">
+                        <div class="table-wrap">
+                            <table class="data-table" id="incidentTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Severity</th>
+                                        <th>Title</th>
+                                        <th>Type</th>
+                                        <th>Status</th>
+                                        <th>Created</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="incidentTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="empty-state" id="incidentEmpty">
+                            <span class="empty-icon">🚨</span>
+                            <p>No incidents recorded. Click "New Incident" to create one.</p>
+                        </div>
+                    </div>
+
+                    <!-- Incident Detail Modal -->
+                    <div class="modal-overlay" id="incidentDetailModal">
+                        <div class="modal modal-lg">
+                            <div class="modal-header">
+                                <h2 id="incDetailTitle">Incident Detail</h2>
+                                <button class="modal-close" id="closeIncidentDetail">&times;</button>
+                            </div>
+                            <div class="modal-body" id="incDetailBody"></div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Cyber Defense Panel -->
+                <section class="panel" id="panelCyberDefense">
+                    <div class="panel-header-row">
+                        <h2>Cyber Defense</h2>
+                    </div>
+                    <div class="defense-tabs">
+                        <button class="defense-tab active" data-defense="cve" id="defTabCVE">CVE Search</button>
+                        <button class="defense-tab" data-defense="mitre" id="defTabMitre">MITRE ATT&CK</button>
+                    </div>
+
+                    <!-- CVE Search -->
+                    <div class="defense-panel active" id="defenseCve">
+                        <div class="card">
+                            <div class="search-bar">
+                                <input type="text" id="cveInput" class="search-input" placeholder="Search CVE by keyword or ID (e.g., CVE-2024-1234, log4j)...">
+                                <button class="btn btn-primary" id="cveSearchBtn">Search</button>
+                            </div>
+                        </div>
+                        <div id="cveResults"></div>
+                    </div>
+
+                    <!-- MITRE ATT&CK -->
+                    <div class="defense-panel" id="defenseMitre">
+                        <div class="card">
+                            <div class="search-bar">
+                                <input type="text" id="mitreInput" class="search-input" placeholder="Search MITRE ATT&CK techniques (e.g., phishing, credential dumping)...">
+                                <button class="btn btn-primary" id="mitreSearchBtn">Search</button>
+                            </div>
+                        </div>
+                        <div class="mitre-matrix" id="mitreMatrix">
+                            <div class="mitre-loading">
+                                <span class="loader"></span>
+                                <p>Loading MITRE ATT&CK framework...</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Threat Intel Feed Panel -->
+                <section class="panel" id="panelThreatFeed">
+                    <div class="panel-header-row">
+                        <h2>Threat Intelligence Feed</h2>
+                        <button class="btn btn-primary" id="refreshFeed">🔄 Refresh</button>
+                    </div>
+                    <div class="card">
+                        <div class="search-bar">
+                            <input type="text" id="feedSearchInput" class="search-input" placeholder="Search threat intel pulses by keyword...">
+                            <button class="btn btn-primary" id="feedSearchBtn">Search</button>
+                        </div>
+                    </div>
+                    <div id="feedResults">
+                        <div class="empty-state">
+                            <span class="empty-icon">📡</span>
+                            <p>Configure your AlienVault OTX API key in Settings to load threat intelligence feeds.</p>
+                        </div>
+                    </div>
+
+                    <!-- Pulse Detail Modal -->
+                    <div class="modal-overlay" id="pulseDetailModal">
+                        <div class="modal modal-lg">
+                            <div class="modal-header">
+                                <h2 id="pulseDetailTitle">Pulse Detail</h2>
+                                <button class="modal-close" id="closePulseDetail">&times;</button>
+                            </div>
+                            <div class="modal-body" id="pulseDetailBody"></div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/threat-hunter.js"></script>
+    <script src="js/osint.js"></script>
+    <script src="js/incident.js"></script>
+    <script src="js/cyber-defense.js"></script>
+    <script src="js/threat-feed.js"></script>
+</body>
+</html>
