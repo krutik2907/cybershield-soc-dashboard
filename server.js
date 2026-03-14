@@ -17,6 +17,9 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const IS_PROD = process.env.NODE_ENV === 'production';
 
+// Trust proxy for Render / load balancers
+app.set('trust proxy', 1);
+
 // ============================================
 // 1. SECURITY MIDDLEWARE STACK
 // ============================================

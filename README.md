@@ -53,6 +53,10 @@ cp .env.example .env
 npm install
 npm start
 
+# Note: If `npm start` fails on Windows due to PowerShell execution policies,
+# you can either double-click the `start.bat` file or run:
+# node server.js
+
 # Open http://localhost:3000
 ```
 
